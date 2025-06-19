@@ -1,0 +1,129 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin: 15px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.cards {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  font-weight: bold;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 24px;
+  background: #fff;
+}
+
+th, td {
+  border: 1px solid #bbb;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+th {
+  background: #eee;
+  font-weight: bold;
+}
+
+.status-0 {
+  background: #fff;
+}
+
+.status-1 {
+  background: #e0e0e0;
+}
+
+.pending-cards {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0 32px 0;
+  flex-wrap: wrap;
+}
+.pending-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 18px 24px 10px 24px;
+  min-width: 110px;
+  text-align: center;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+  border: 2px solid #e0e0e0;
+  color: #0d47a1;
+}
+.pending-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.16);
+  border-color: #1976d2;
+  transform: translateY(-2px) scale(1.03);
+}
+.pending-title {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #1976d2;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.pending-count {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #222;
+}
+
+.job-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 18px 24px 10px 24px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 32px;
+}
+.job-field {
+  min-width: 120px;
+  margin-bottom: 6px;
+}
+.job-label {
+  font-weight: bold;
+  color: #1976d2;
+}
+.done-btn {
+  margin-left: auto;
+  background: #43a047;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.done-btn:hover {
+  background: #2e7031;
+}
+
