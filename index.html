@@ -1,16 +1,513 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargo Dashboard</title>
-    <link rel="stylesheet" href="dash.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
+    <title>To-Do List Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Kanit', sans-serif;
+        }
+    </style>
 </head>
-<body>
-    <h1>Cargo Dashboard</h1>
-    <div id="pendingProcess"></div>
-    <div id="jobList"></div>
-    <script src="dash.js"></script>
-</body>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">📋 To-Do Dashboard</h1>
+            <p class="text-gray-600">จัดการงานของคุณอย่างมีประสิทธิภาพ</p>
+        </div>
+
+        <!-- Main Categories -->
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <!-- Pending -->
+            <div onclick="filterTasks('pending')" class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">⏳</div>
+                    <h2 class="text-sm font-medium text-gray-800 mb-2">Pending</h2>
+                    <span class="text-2xl font-bold text-gray-600" id="pendingCount">0</span>
+                </div>
+            </div>
+
+            <!-- Task -->
+            <div onclick="filterTasks('task')" class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">📋</div>
+                    <h2 class="text-sm font-medium text-gray-800 mb-2">Task</h2>
+                    <span class="text-2xl font-bold text-blue-600" id="taskCount">0</span>
+                </div>
+            </div>
+
+            <!-- D/O Request -->
+            <div onclick="filterTasks('do-request')" class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">📄</div>
+                    <h2 class="text-sm font-medium text-gray-800 mb-2">D/O Request</h2>
+                    <span class="text-2xl font-bold text-orange-600" id="doRequestCount">0</span>
+                </div>
+            </div>
+
+            <!-- Pending Receipt -->
+            <div onclick="filterTasks('pending-receipt')" class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">📋</div>
+                    <h2 class="text-sm font-medium text-gray-800 mb-2">Pending Receipt</h2>
+                    <span class="text-2xl font-bold text-purple-600" id="pendingReceiptCount">0</span>
+                </div>
+            </div>
+
+            <!-- Pick up D/O -->
+            <div onclick="filterTasks('pickup')" class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">🚚</div>
+                    <h2 class="text-sm font-medium text-gray-800 mb-2">Pick up D/O</h2>
+                    <span class="text-2xl font-bold text-red-600" id="pickupCount">0</span>
+                </div>
+            </div>
+
+            <!-- Completed -->
+            <div onclick="filterTasks('completed')" class="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:shadow-md transition-shadow">
+                <div class="text-center">
+                    <div class="text-2xl mb-2">✅</div>
+                    <h2 class="text-sm font-medium text-gray-800 mb-2">Completed</h2>
+                    <span class="text-2xl font-bold text-green-600" id="completedCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memo Section -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-medium text-gray-800">Memo</h2>
+                <span class="text-sm text-gray-600">Active: <span class="font-semibold text-purple-600" id="memoCount">0</span></span>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openMemoModal()" class="px-4 py-2 bg-gray-900 text-white rounded text-sm hover:bg-gray-800 transition-colors">
+                    เพิ่ม Memo
+                </button>
+                <button onclick="openMemoListModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded text-sm hover:bg-gray-50 transition-colors">
+                    ดู Memo ทั้งหมด
+                </button>
+            </div>
+        </div>
+
+        <!-- Add New Task -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-8">
+            <div class="flex flex-wrap gap-2">
+                <input 
+                    type="text" 
+                    id="taskInput" 
+                    placeholder="ใส่รายละเอียดงาน..." 
+                    class="flex-1 min-w-[200px] px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                <select id="typeSelect" class="px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">ประเภท</option>
+                    <option value="credit">Credit</option>
+                    <option value="lcb">LCB</option>
+                    <option value="bkk">BKK</option>
+                    <option value="other">Other</option>
+                </select>
+                <input 
+                    type="date" 
+                    id="dateSelect" 
+                    class="px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                <select id="timeSelect" class="px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                    <option value="">เวลา</option>
+                    <option value="am">AM</option>
+                    <option value="pm">PM</option>
+                </select>
+
+                <button 
+                    onclick="addTask()" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                    เพิ่ม
+                </button>
+            </div>
+        </div>
+
+        <!-- Task List -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">รายการงาน</h2>
+            
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button onclick="filterTasks('all')" class="filter-btn active px-4 py-2 rounded-lg font-medium transition-colors">ทั้งหมด</button>
+                <button onclick="filterTasks('pending')" class="filter-btn px-4 py-2 rounded-lg font-medium transition-colors">Pending</button>
+                <button onclick="filterTasks('task')" class="filter-btn px-4 py-2 rounded-lg font-medium transition-colors">Task</button>
+                <button onclick="filterTasks('do-request')" class="filter-btn px-4 py-2 rounded-lg font-medium transition-colors">D/O Request</button>
+                <button onclick="filterTasks('pending-receipt')" class="filter-btn px-4 py-2 rounded-lg font-medium transition-colors">Pending Receipt</button>
+                <button onclick="filterTasks('pickup')" class="filter-btn px-4 py-2 rounded-lg font-medium transition-colors">Pick up D/O</button>
+                <button onclick="filterTasks('completed')" class="filter-btn px-4 py-2 rounded-lg font-medium transition-colors">Completed</button>
+            </div>
+
+            <!-- Tasks Container -->
+            <div id="tasksList" class="space-y-3">
+                <!-- Tasks will be dynamically added here -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="text-center py-12 text-gray-500">
+                <div class="text-6xl mb-4">📝</div>
+                <p class="text-lg">ยังไม่มีงานในรายการ</p>
+                <p class="text-sm">เพิ่มงานใหม่เพื่อเริ่มต้นใช้งาน</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memo Modal -->
+    <div id="memoModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-800">เพิ่ม Memo ใหม่</h3>
+                <button onclick="closeMemoModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <input 
+                    type="text" 
+                    id="memoTitle" 
+                    placeholder="หัวข้อ Memo..." 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                <textarea 
+                    id="memoContent" 
+                    placeholder="เนื้อหา Memo..." 
+                    rows="4"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                ></textarea>
+                <div class="flex gap-3">
+                    <button onclick="saveMemo()" class="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
+                        บันทึก
+                    </button>
+                    <button onclick="closeMemoModal()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium">
+                        ยกเลิก
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memo List Modal -->
+    <div id="memoListModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold text-gray-800">รายการ Memo</h3>
+                <button onclick="closeMemoListModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="memoList" class="space-y-3">
+                <!-- Memos will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = [];
+        let memos = [];
+        let currentFilter = 'all';
+
+        // Load tasks and memos from localStorage on page load
+        window.onload = function() {
+            const savedTasks = localStorage.getItem('todoTasks');
+            const savedMemos = localStorage.getItem('todoMemos');
+            if (savedTasks) {
+                tasks = JSON.parse(savedTasks);
+            }
+            if (savedMemos) {
+                memos = JSON.parse(savedMemos);
+            }
+            renderTasks();
+            updateStats();
+        };
+
+        function saveTasks() {
+            localStorage.setItem('todoTasks', JSON.stringify(tasks));
+        }
+
+        function saveMemos() {
+            localStorage.setItem('todoMemos', JSON.stringify(memos));
+        }
+
+        // Memo functions
+        function openMemoModal() {
+            document.getElementById('memoModal').classList.remove('hidden');
+            document.getElementById('memoModal').classList.add('flex');
+        }
+
+        function closeMemoModal() {
+            document.getElementById('memoModal').classList.add('hidden');
+            document.getElementById('memoModal').classList.remove('flex');
+            document.getElementById('memoTitle').value = '';
+            document.getElementById('memoContent').value = '';
+        }
+
+        function saveMemo() {
+            const title = document.getElementById('memoTitle').value.trim();
+            const content = document.getElementById('memoContent').value.trim();
+            
+            if (title === '' || content === '') {
+                alert('กรุณาใส่หัวข้อและเนื้อหา Memo');
+                return;
+            }
+
+            const newMemo = {
+                id: Date.now(),
+                title: title,
+                content: content,
+                createdAt: new Date().toLocaleString('th-TH')
+            };
+
+            memos.unshift(newMemo);
+            saveMemos();
+            updateStats();
+            closeMemoModal();
+        }
+
+        function openMemoListModal() {
+            document.getElementById('memoListModal').classList.remove('hidden');
+            document.getElementById('memoListModal').classList.add('flex');
+            renderMemos();
+        }
+
+        function closeMemoListModal() {
+            document.getElementById('memoListModal').classList.add('hidden');
+            document.getElementById('memoListModal').classList.remove('flex');
+        }
+
+        function deleteMemo(id) {
+            memos = memos.filter(memo => memo.id !== id);
+            saveMemos();
+            renderMemos();
+            updateStats();
+        }
+
+        function renderMemos() {
+            const memoList = document.getElementById('memoList');
+            
+            if (memos.length === 0) {
+                memoList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">📝</div>
+                        <p>ยังไม่มี Memo</p>
+                    </div>
+                `;
+                return;
+            }
+
+            memoList.innerHTML = memos.map(memo => `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-gray-800">${memo.title}</h4>
+                        <button onclick="deleteMemo(${memo.id})" class="text-red-500 hover:text-red-700 text-sm">ลบ</button>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-2">${memo.content}</p>
+                    <p class="text-xs text-gray-400">สร้างเมื่อ: ${memo.createdAt}</p>
+                </div>
+            `).join('');
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById('taskInput');
+            const typeSelect = document.getElementById('typeSelect');
+            const dateSelect = document.getElementById('dateSelect');
+            const timeSelect = document.getElementById('timeSelect');
+
+            
+            if (taskInput.value.trim() === '') {
+                alert('กรุณาใส่รายละเอียดงาน');
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                text: taskInput.value.trim(),
+                status: 'task',
+                originalStatus: 'task',
+                type: typeSelect.value,
+                date: dateSelect.value,
+                time: timeSelect.value,
+
+                createdAt: new Date().toLocaleString('th-TH')
+            };
+
+            tasks.unshift(newTask);
+            taskInput.value = '';
+            typeSelect.value = '';
+            dateSelect.value = '';
+            timeSelect.value = '';
+
+            
+            saveTasks();
+            renderTasks();
+            updateStats();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+            renderTasks();
+            updateStats();
+        }
+
+        function changeStatus(id, newStatus) {
+            const task = tasks.find(task => task.id === id);
+            if (task) {
+                // If changing to completed, store the original status
+                if (newStatus === 'completed' && task.status !== 'completed') {
+                    task.originalStatus = task.status;
+                }
+                // If changing from completed back to active, restore original status if available
+                else if (task.status === 'completed' && newStatus !== 'completed') {
+                    task.originalStatus = newStatus;
+                }
+                
+                task.status = newStatus;
+                saveTasks();
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        function filterTasks(filter) {
+            currentFilter = filter;
+            
+            // Update filter button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const tasksList = document.getElementById('tasksList');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredTasks = tasks;
+            if (currentFilter !== 'all') {
+                if (currentFilter === 'pending') {
+                    // Pending = รวมทุกรายการที่ยังไม่ Complete
+                    filteredTasks = tasks.filter(task => task.status !== 'completed');
+                } else {
+                    filteredTasks = tasks.filter(task => task.status === currentFilter);
+                }
+            }
+
+            if (filteredTasks.length === 0) {
+                tasksList.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            tasksList.innerHTML = filteredTasks.map(task => {
+                const statusConfig = {
+                    'task': { color: 'blue', icon: '📋', text: 'Task' },
+                    'do-request': { color: 'orange', icon: '📄', text: 'D/O Request' },
+                    'pending-receipt': { color: 'purple', icon: '📋', text: 'Pending Receipt' },
+                    'pickup': { color: 'red', icon: '🚚', text: 'Pick up D/O' },
+                    'completed': { color: 'green', icon: '✅', text: 'Completed' }
+                };
+                
+                const config = statusConfig[task.status];
+                
+                // Format additional info
+                let additionalInfo = [];
+                if (task.type) {
+                    const typeText = task.type.toUpperCase();
+                    additionalInfo.push(`<span class="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">${typeText}</span>`);
+                }
+                if (task.date) {
+                    const dateFormatted = new Date(task.date).toLocaleDateString('th-TH');
+                    additionalInfo.push(`<span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">📅 ${dateFormatted}</span>`);
+                }
+                if (task.time) {
+                    const timeText = task.time.toUpperCase();
+                    additionalInfo.push(`<span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">🕐 ${timeText}</span>`);
+                }
+
+                
+                return `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="text-xl">${config.icon}</span>
+                                <span class="px-3 py-1 text-sm font-medium rounded-full bg-${config.color}-100 text-${config.color}-700">
+                                    ${config.text}
+                                </span>
+                            </div>
+                            <p class="text-gray-800 font-medium mb-2">${task.text}</p>
+                            ${additionalInfo.length > 0 ? `<div class="flex flex-wrap gap-2 mb-2">${additionalInfo.join('')}</div>` : ''}
+                            <p class="text-sm text-gray-500">สร้างเมื่อ: ${task.createdAt}</p>
+                        </div>
+                        <div class="flex items-center gap-2 ml-4">
+                            <select onchange="changeStatus(${task.id}, this.value)" class="px-3 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="task" ${task.status === 'task' ? 'selected' : ''}>Task</option>
+                                <option value="do-request" ${task.status === 'do-request' ? 'selected' : ''}>D/O Request</option>
+                                <option value="pending-receipt" ${task.status === 'pending-receipt' ? 'selected' : ''}>Pending Receipt</option>
+                                <option value="pickup" ${task.status === 'pickup' ? 'selected' : ''}>Pick up D/O</option>
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+                            </select>
+                            <button onclick="deleteTask(${task.id})" class="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                                ลบ
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const taskActive = tasks.filter(task => task.status === 'task').length;
+            const doRequestActive = tasks.filter(task => task.status === 'do-request').length;
+            const pendingReceiptActive = tasks.filter(task => task.status === 'pending-receipt').length;
+            const pickupActive = tasks.filter(task => task.status === 'pickup').length;
+            const completedActive = tasks.filter(task => task.status === 'completed').length;
+            
+            // Pending = รวมทุกรายการที่ยังไม่ Complete
+            const pendingActive = taskActive + doRequestActive + pendingReceiptActive + pickupActive;
+            
+            const memoCount = memos.length;
+
+            document.getElementById('pendingCount').textContent = pendingActive;
+            document.getElementById('taskCount').textContent = taskActive;
+            document.getElementById('doRequestCount').textContent = doRequestActive;
+            document.getElementById('pendingReceiptCount').textContent = pendingReceiptActive;
+            document.getElementById('pickupCount').textContent = pickupActive;
+            document.getElementById('completedCount').textContent = completedActive;
+            document.getElementById('memoCount').textContent = memoCount;
+        }
+
+        // Allow adding task with Enter key
+        document.getElementById('taskInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+    </script>
+
+    <style>
+        .filter-btn {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .filter-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .filter-btn:hover {
+            background-color: #e5e7eb;
+        }
+        
+        .filter-btn.active:hover {
+            background-color: #2563eb;
+        }
+    </style>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97a270da800726c9',t:'MTc1NzA0MDg1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
